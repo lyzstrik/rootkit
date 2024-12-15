@@ -92,24 +92,15 @@ sudo chroot $ROOTFS_DIR /bin/bash -c "
     systemctl enable networking
 "
 
-echo "Do you want to copy the rootkit project locally into the VM or install it later using Git? (local/git)"
-read -p "Enter your choice: " ROOTKIT_CHOICE
+echo "Copying rootkit project into the VM..."
+sudo rsync -av --exclude='deployement' --exclude='.vscode' --exclude='.git' $ROOTKIT_DIR/ $ROOTFS_DIR/home/kit/knock/
+sudo chown -R kit:kit $ROOTFS_DIR/home/kit/knock
+sudo chmod -R 700 $ROOTFS_DIR/home/kit/knock
 
-if [[ "$ROOTKIT_CHOICE" == "local" ]]; then
-    echo "Copying rootkit project into the VM..."
-    sudo rsync -av --exclude='deployement' --exclude='.vscode' --exclude='.git' $ROOTKIT_DIR/ $ROOTFS_DIR/home/kit/knock/
-    sudo chown -R kit:kit $ROOTFS_DIR/home/kit/knock
-    sudo chmod -R 700 $ROOTFS_DIR/home/kit/knock
-
-    sudo chroot $ROOTFS_DIR /bin/bash -c "
-        chown -R kit:kit /home/kit/knock
-        chmod -R 700 /home/kit/knock
-    "
-elif [[ "$ROOTKIT_CHOICE" == "git" ]]; then
-    echo "You chose to install the rootkit later using Git. Proceeding..."
-else
-    echo "Invalid choice. No action taken for the rootkit project."
-fi
+sudo chroot $ROOTFS_DIR /bin/bash -c "
+    chown -R kit:kit /home/kit/knock
+    chmod -R 700 /home/kit/knock
+"
 
 echo "Installing GRUB and Kernel..."
 sudo mkdir -p $ROOTFS_DIR/boot/grub

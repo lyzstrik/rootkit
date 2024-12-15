@@ -18,10 +18,6 @@ fi
 # Demander à l'utilisateur l'interface réseau avec accès Internet
 read -p "Entrez le nom de l'interface réseau avec accès Internet (ex: eth0, wlan0) : " HOST_INTERFACE
 
-# Installer les dépendances nécessaires
-apt update
-apt install -y dnsmasq iptables
-
 # Créer le pont réseau
 if ! ip link show $BRIDGE_NAME &>/dev/null; then
   echo "Création du pont $BRIDGE_NAME..."
@@ -68,8 +64,8 @@ if ! grep -q "net.ipv4.ip_forward=1" /etc/sysctl.conf; then
 fi
 
 # Résumé
-echo "\nConfiguration terminée avec succès :"
+echo "Configuration terminée avec succès :"
 echo "- Pont : $BRIDGE_NAME ($BRIDGE_IP/24)"
 echo "- Interface réseau hôte : $HOST_INTERFACE"
 echo "- Plage DHCP : $DHCP_RANGE_START à $DHCP_RANGE_END"
-echo "\nVous pouvez maintenant connecter une VM au pont $BRIDGE_NAME."
+echo "Vous pouvez maintenant connecter une VM au pont $BRIDGE_NAME."

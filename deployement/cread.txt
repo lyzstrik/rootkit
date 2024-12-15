@@ -1,0 +1,7 @@
+# User root:
+user : root
+password : root
+
+# User kit:
+user : kit
+password : kit
