@@ -33,7 +33,7 @@ losetup -a | grep disk.img | cut -d ':' -f1 | while read loop; do
 done
 
 KERNEL_PATH="vmlinuz-6.1.0-27-amd64"
-ROOTKIT_DIR=$(realpath "$(pwd)/../../knock")
+ROOTKIT_DIR=$(realpath "$(pwd)/../")
 DISK_IMG="disk.img"
 DISK_SIZE="3G"
 ROOTFS_DIR="/tmp/my-rootfs"
@@ -93,13 +93,13 @@ sudo chroot $ROOTFS_DIR /bin/bash -c "
 "
 
 echo "Copying rootkit project into the VM..."
-sudo rsync -av --exclude='deployement' --exclude='.vscode' --exclude='.git' $ROOTKIT_DIR/ $ROOTFS_DIR/home/kit/knock/
-sudo chown -R kit:kit $ROOTFS_DIR/home/kit/knock
-sudo chmod -R 700 $ROOTFS_DIR/home/kit/knock
+sudo rsync -av --exclude='deployement' --exclude='.vscode' --exclude='.git' $ROOTKIT_DIR/ $ROOTFS_DIR/home/kit/rootkit/
+sudo chown -R kit:kit $ROOTFS_DIR/home/kit/rootkit
+sudo chmod -R 700 $ROOTFS_DIR/home/kit/rootkit
 
 sudo chroot $ROOTFS_DIR /bin/bash -c "
-    chown -R kit:kit /home/kit/knock
-    chmod -R 700 /home/kit/knock
+    chown -R kit:kit /home/kit/rootkit
+    chmod -R 700 /home/kit/rootkit
 "
 
 echo "Installing GRUB and Kernel..."
