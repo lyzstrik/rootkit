@@ -1,0 +1,11 @@
+[Unit]
+Description=Port Knocking Server
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/knockd -i ens3
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

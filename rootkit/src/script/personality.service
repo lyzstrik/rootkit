@@ -1,0 +1,11 @@
+[Unit]
+Description=Personality is cool i swear
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/personality_install.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

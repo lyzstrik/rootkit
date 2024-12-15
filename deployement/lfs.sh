@@ -15,18 +15,27 @@ ______            _   _    _ _     _____   ____ _____  _____
                      | |    | |_  \ |--.                     
                      | |    |  _|  \--. \                    
                      | |____| |   /\__/ /                    
-                     \_____/\_|   \____/                     
-                                                                                                                    
+                     \_____/_|   \____/                     
+                                                                                                                     
 "
+
+if ! command -v losetup &> /dev/null; then
+    echo "losetup not found, adding /usr/sbin to PATH"
+    export PATH=$PATH:/usr/sbin
+    if ! command -v losetup &> /dev/null; then
+        echo "Error: losetup is still not found after modifying PATH."
+        exit 1
+    fi
+fi
 
 losetup -a | grep disk.img | cut -d ':' -f1 | while read loop; do
     sudo rm $loop
 done
 
 KERNEL_PATH="vmlinuz-6.1.0-27-amd64"
-ROOTKIT_DIR="/home/lyzi/exo/A2-S1/rootkit"
+ROOTKIT_DIR=$(realpath "$(pwd)/../../knock")
 DISK_IMG="disk.img"
-DISK_SIZE="6.5G"
+DISK_SIZE="3G"
 ROOTFS_DIR="/tmp/my-rootfs"
 LOOP_DEVICE="/dev/loop0"
 DEBIAN_RELEASE="stable"
@@ -53,28 +62,54 @@ sudo mount -o rw ${LOOP_DEVICE}p1 $ROOTFS_DIR
 echo "Installing minimal Debian system..."
 sudo debootstrap --arch amd64 $DEBIAN_RELEASE $ROOTFS_DIR http://ftp.fr.debian.org/debian/
 
+echo "iptables-persistent iptables-persistent/autosave_v4 boolean true" | sudo chroot $ROOTFS_DIR /usr/bin/debconf-set-selections
+echo "iptables-persistent iptables-persistent/autosave_v6 boolean true" | sudo chroot $ROOTFS_DIR /usr/bin/debconf-set-selections
+
 echo "Configuring the system..."
 sudo chroot $ROOTFS_DIR /bin/bash -c "
     apt update &&
-    apt install -y linux-image-amd64 linux-headers-amd64 build-essential libncurses-dev libssl-dev libelf-dev bc flex bison initramfs-tools e2fsprogs sudo &&
+    apt install -y linux-image-amd64 linux-headers-amd64 build-essential libncurses-dev libssl-dev libelf-dev bc flex bison initramfs-tools e2fsprogs sudo net-tools ifupdown git ssh openssh-server wget libpcap-dev autoconf iptables iptables-persistent &&
     echo 'root:root' | chpasswd &&
     echo 'rootkit2600' > /etc/hostname &&
+    echo '127.0.0.1       rootkit2600' >> /etc/hosts &&
     useradd -m -s /bin/bash kit &&
     echo 'kit:kit' | chpasswd &&
     echo 'kit    ALL=(ALL:ALL) ALL' >> /etc/sudoers &&
     update-initramfs -c -k \6.1.0-27-amd64
 "
 
-echo "Copying rootkit project into the VM..."
-sudo cp -r $ROOTKIT_DIR $ROOTFS_DIR/home/kit/rootkit
-sudo chown -R kit:kit $ROOTFS_DIR/home/kit/rootkit
-sudo chmod -R 700 $ROOTFS_DIR/home/kit/rootkit
+echo "Configuring network..."
+cat <<EOF | sudo tee $ROOTFS_DIR/etc/network/interfaces
+auto lo
+iface lo inet loopback
+
+auto ens3
+iface ens3 inet dhcp
+EOF
 
 sudo chroot $ROOTFS_DIR /bin/bash -c "
-    chown -R kit:kit /home/kit/rootkit
-    chmod -R 700 /home/kit/rootkit
+    echo 'nameserver 8.8.8.8' > /etc/resolv.conf &&
+    systemctl enable networking
 "
 
+echo "Do you want to copy the rootkit project locally into the VM or install it later using Git? (local/git)"
+read -p "Enter your choice: " ROOTKIT_CHOICE
+
+if [[ "$ROOTKIT_CHOICE" == "local" ]]; then
+    echo "Copying rootkit project into the VM..."
+    sudo rsync -av --exclude='deployement' --exclude='.vscode' --exclude='.git' $ROOTKIT_DIR/ $ROOTFS_DIR/home/kit/knock/
+    sudo chown -R kit:kit $ROOTFS_DIR/home/kit/knock
+    sudo chmod -R 700 $ROOTFS_DIR/home/kit/knock
+
+    sudo chroot $ROOTFS_DIR /bin/bash -c "
+        chown -R kit:kit /home/kit/knock
+        chmod -R 700 /home/kit/knock
+    "
+elif [[ "$ROOTKIT_CHOICE" == "git" ]]; then
+    echo "You chose to install the rootkit later using Git. Proceeding..."
+else
+    echo "Invalid choice. No action taken for the rootkit project."
+fi
 
 echo "Installing GRUB and Kernel..."
 sudo mkdir -p $ROOTFS_DIR/boot/grub
@@ -96,9 +131,9 @@ sudo umount $ROOTFS_DIR
 sudo losetup -d $LOOP_DEVICE
 
 echo "Running QEMU..."
-qemu-system-x86_64 \
-    -hda $DISK_IMG \
+sudo qemu-system-x86_64 \
+    -drive file=$DISK_IMG,format=raw \
     -nographic \
     -enable-kvm \
     -m 1024 \
-    -net nic -net user
+    -net nic -net bridge,br=br0

