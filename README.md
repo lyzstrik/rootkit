@@ -42,7 +42,7 @@ In your host you will try to connect on vm by too way for prouve that rootkit ba
 
 First go on tests directory : ``cd tests``
 Then you have 4 chose :
-    - ``./connect.sh -i vm_ip -o`` for open port ssh
-    - ``./connect.sh -i vm_ip -c`` for close port ssh
-    - ``./connect.sh -i vm_ip -ro`` for open port ssh and activate rootkit
-    - ``./connect.sh -i vm_ip -rc`` for close port ssh and disable rootkit
+- ``./connect.sh -i vm_ip -o`` for open port ssh
+- ``./connect.sh -i vm_ip -c`` for close port ssh
+- ``./connect.sh -i vm_ip -ro`` for open port ssh and activate rootkit
+- ``./connect.sh -i vm_ip -rc`` for close port ssh and disable rootkit
