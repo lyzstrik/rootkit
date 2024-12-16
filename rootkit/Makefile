@@ -42,5 +42,5 @@ uninstall:
 
 clean:
 	make -C $(KDIR) M=$(PWD) clean
-	@rm -rf $(TMP_DIR)/*
+	@rm -rf $(TMP_DIR)/* $(BIN_DIR)/*
 	@rm -f $(BIN_DIR)/rootkit.ko $(BIN_DIR)/compagnon
