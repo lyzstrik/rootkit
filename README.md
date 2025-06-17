@@ -46,3 +46,6 @@ Then you have 4 chose :
 - ``./connect.sh -i vm_ip -c`` for close port ssh
 - ``./connect.sh -i vm_ip -ro`` for open port ssh and activate rootkit
 - ``./connect.sh -i vm_ip -rc`` for close port ssh and disable rootkit
+
+# TO ADD : 
+ - [] C2
